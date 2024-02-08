@@ -1,4 +1,5 @@
 import { createWorker } from "tesseract.js";
+import type { Media } from "./media";
 
 async function ocr(url: string) {
   const worker = await createWorker("deu");
@@ -7,7 +8,7 @@ async function ocr(url: string) {
   return ret.data.text;
 }
 
-export async function annotateMedia(images: string[]) {
+export async function annotateMedia(images: string[]): Promise<Media[]> {
   return await Promise.all(
     images.map(async (url) => {
       return {

@@ -12,7 +12,7 @@ const masto = createRestAPIClient({
   accessToken: process.env.MASTO_ACCESS_TOKEN!,
 });
 
-export async function uploadMedia(media: Media) {
+async function uploadSingleMedia(media: Media): Promise<string> {
   console.log(`attempting to upload ${media.originalURL}`);
   const remoteFile = await fetch(media.originalURL);
   const blob = await remoteFile.blob();
@@ -24,6 +24,10 @@ export async function uploadMedia(media: Media) {
     description: media.description,
   });
   return attachment.id;
+}
+
+export async function uploadMedia(media: Media[]): Promise<string[]> {
+  return await Promise.all(media.map((m) => uploadSingleMedia(m)));
 }
 
 export async function postToMastodon(post: MastoPost) {

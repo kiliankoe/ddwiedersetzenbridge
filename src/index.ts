@@ -1,5 +1,5 @@
 import { postToMastodon, uploadMedia } from "./masto";
-import { annotateMedia as annotatedMedia } from "./ocr";
+import { annotateMedia } from "./ocr";
 import { extractImages, fetchTweets } from "./twitter";
 import { lastPostDate, setLastPostDate } from "./persistency";
 
@@ -10,29 +10,18 @@ const newItems = feedItems.filter((item) => new Date(item.isoDate!) > lastDate);
 console.log(newItems.length > 0 ? newItems : "no new items");
 
 for (const item of newItems) {
-  let post;
+  let attachmentIds = undefined;
 
-  let images = extractImages(item);
+  const images = extractImages(item);
   if (images.length > 0) {
-    images = await annotatedMedia(images);
-    const attachmentIds = await Promise.all(
-      images.map(async (image) => {
-        return await uploadMedia(image);
-      })
-    );
-    post = {
-      status: `${item.title}\n${item.link}`,
-      media_ids: attachmentIds,
-    };
-  } else {
-    post = {
-      status: `${item.title}\n${item.link}`,
-    };
+    const media = await annotateMedia(images);
+    attachmentIds = await uploadMedia(media);
   }
 
   const status = await postToMastodon({
     visibility: "public",
-    ...post,
+    status: `${item.title}\n${item.link}`,
+    media_ids: attachmentIds,
   });
   console.log(`posted ${status.url}`);
 
@@ -42,3 +31,4 @@ for (const item of newItems) {
 
 const latest = feedItems[0];
 setLastPostDate(latest.isoDate!);
+console.log(`done, last post date set to ${latest.isoDate}`);

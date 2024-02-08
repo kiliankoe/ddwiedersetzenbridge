@@ -4,7 +4,7 @@ import Parser from "rss-parser";
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
-export async function fetchTweets() {
+export async function fetchTweets(): Promise<Parser.Item[]> {
   // 🤞 that nitter never dies. twiiit is the best thing since sliced bread btw.
   const feedURL = "https://twiiit.com/ddwiedersetzen/rss";
 
@@ -20,10 +20,8 @@ export function guid(feedItem: any) {
 
 export function extractImages(feedItem: any) {
   const dom = new JSDOM(feedItem.content);
-
   const images = [...dom.window.document.querySelectorAll("img")].map(
     (img) => img.src
   );
-
   return images;
 }
