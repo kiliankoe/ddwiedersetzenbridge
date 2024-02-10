@@ -31,4 +31,5 @@ for (const item of newItems) {
 
 const latest = feedItems[0];
 setLastPostDate(latest.isoDate!);
-console.log(`done, last post date set to ${latest.isoDate}`);
+const now = new Date().toISOString();
+console.log(`${now}: done, last post date set to ${latest.isoDate}`);
