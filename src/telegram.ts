@@ -20,10 +20,17 @@ await client.start({
 });
 console.log(client.session.save());
 
-const messages = await client.getMessages(process.env.TELEGRAM_CHANNEL_ID, {
-  limit: 10,
-});
-console.log(messages.reverse().map((m) => m.text));
+// const messages = await client.getMessages(process.env.TELEGRAM_CHANNEL_ID, {
+//   limit: 10,
+// });
+// console.log(messages.reverse().map((m) => m.text));
+
+for await (const message of client.iterMessages(
+  process.env.TELEGRAM_CHANNEL_ID,
+  { limit: 25 }
+)) {
+  console.log(message.id, message.text);
+}
 
 // terrible alternative: scrape web preview
 
