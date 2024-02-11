@@ -6,7 +6,8 @@ import { lastPostDate, setLastPostDate } from "./persistency";
 const lastDate = await lastPostDate();
 const feedItems = await fetchTweets();
 
-const newItems = feedItems.filter((item) => new Date(item.isoDate!) > lastDate);
+let newItems = feedItems.filter((item) => new Date(item.isoDate!) > lastDate);
+newItems = newItems.reverse();
 console.log(newItems.length > 0 ? newItems : "no new items");
 
 for (const item of newItems) {
