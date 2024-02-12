@@ -31,5 +31,8 @@ export async function uploadMedia(media: Media[]): Promise<string[]> {
 }
 
 export async function postToMastodon(post: MastoPost) {
+  if (post.status.length > 1000) {
+    post.status = post.status.slice(0, 994) + " [...]";
+  }
   return masto.v1.statuses.create(post);
 }

@@ -1,10 +1,11 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
 import input from "input";
+import { lastTelegramPostID, setLastTelegramPostID } from "./persistency";
 
 const stringSession = new StringSession(process.env.TELEGRAM_STRING_SESSION);
 
-const client = new TelegramClient(
+export const client = new TelegramClient(
   stringSession,
   +process.env.TELEGRAM_API_ID!,
   process.env.TELEGRAM_API_HASH!,
@@ -12,45 +13,53 @@ const client = new TelegramClient(
     connectionRetries: 5,
   }
 );
+
 await client.start({
   phoneNumber: process.env.TELEGRAM_PHONE_NUMBER!,
-  password: async () => process.env.TELGRAM_PASSWORD!,
+  password: async () => process.env.TELEGRAM_PASSWORD!,
   phoneCode: async () => await input.text("code: "),
   onError: (err) => console.log(err),
 });
 console.log(client.session.save());
 
-// const messages = await client.getMessages(process.env.TELEGRAM_CHANNEL_ID, {
-//   limit: 10,
-// });
-// console.log(messages.reverse().map((m) => m.text));
-
-for await (const message of client.iterMessages(
-  process.env.TELEGRAM_CHANNEL_ID,
-  { limit: 25 }
-)) {
-  console.log(message.id, message.text);
+export async function getLastMessages(count: number = 50) {
+  const messages = await client.getMessages(process.env.TELEGRAM_CHANNEL_ID, {
+    limit: count,
+  });
+  return messages.reverse();
 }
 
-// terrible alternative: scrape web preview
+export async function getNewMessages() {
+  let messages = await getLastMessages();
+  const lastPostID = await lastTelegramPostID();
+  if (!lastPostID) {
+    setLastTelegramPostID(messages[messages.length - 1].id);
+    return [];
+  }
 
-// const jsdom = require("jsdom");
-// const { JSDOM } = jsdom;
+  messages = messages.filter((m) => m.id > +lastPostID);
 
-// const html = await Bun.file("src/out.html").text();
-// const dom = new JSDOM(html);
-// const messages = [
-//   ...dom.window.document.querySelectorAll(
-//     "div.tgme_widget_message_text:not(a.tgme_widget_message_reply div.tgme_widget_message_text)"
-//   ),
-// ];
+  // All media is currently listed as a separate message. These should be grouped
+  // somehow so that they can be posted as a single message.
+  // Filtered for now until someone gets around to a better implementation here.
+  // Notes for the future:
+  //  - the message containing text and context comes first, media events follow
+  //    immediately after
+  //  - the context message also has `media` attached (didn't check )
+  messages = messages.filter((m) => m.text.length !== 0);
 
-// console.log(
-//   messages
-//     .map((m) => {
-//       let text = m.textContent;
-//       text = text.replace(/\n/g, " ").replace(/ +/g, " ").trim();
-//       return text;
-//     })
-//     .join("\n\n")
-// );
+  return messages;
+}
+
+// let messages = await getLastMessages();
+// // these are known to contain media (3 photos and one attached as a file (here a "document"))
+// messages = messages.filter((m) => m.id <= 647 && m.id >= 641);
+// for (const msg of messages) {
+//   if (msg.photo) {
+//     const path = await client.downloadMedia(msg.media!, {
+//       outputFile: `${msg.photo.id}.png`,
+//     });
+//     console.log(path);
+//   }
+// }
+// process.exit(0);
