@@ -21,7 +21,7 @@ for (const item of newItems) {
 
   const status = await postToMastodon({
     visibility: "public",
-    status: `${item.title}\n${item.link}`,
+    status: item.title,
     media_ids: attachmentIds,
   });
   console.log(`posted ${status.url}`);
