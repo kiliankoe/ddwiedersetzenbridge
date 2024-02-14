@@ -1,4 +1,4 @@
-# Twitter → Mastodon Bridge für @ddwiedersetzen
+# Mastodon Bridge für @ddwiedersetzen
 
 ```
 # fill .env
